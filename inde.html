@@ -239,11 +239,13 @@
         else if (ev.keyCode == KEY.SPACE) {
           if (paused) {
             restart();
-            handled = true;
+          } else if (playing) {
+            pause();
           } else {
             play();
-            handled = true;
           }
+
+          handled = true;
         }
         else if (ev.keyCode == KEY.R) {
           requestRestart();
