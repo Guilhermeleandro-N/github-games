@@ -3,14 +3,36 @@
 <head>
   <title>Javascript Tetris</title>
   <style>
-    body      { font-family: Helvetica, sans-serif; }
-    #tetris   { margin: 1em auto; padding: 1em; border: 4px solid black; border-radius: 10px; background-color: #F8F8F8; }
+    :root {
+      --page-background: #FFFFFF;
+      --panel-background: #F8F8F8;
+      --text-color: #000000;
+      --border-color: #000000;
+      --canvas-background: url(texture.jpg);
+      --canvas-shadow: #999999;
+      --upcoming-background: #E0E0E0;
+      --button-background: #FFFFFF;
+    }
+
+    body      { font-family: Helvetica, sans-serif; background-color: var(--page-background); color: var(--text-color); }
+    body.dark-mode {
+      --page-background: #121212;
+      --panel-background: #242424;
+      --text-color: #F5F5F5;
+      --border-color: #F5F5F5;
+      --canvas-background: #1B1B1B;
+      --canvas-shadow: #000000;
+      --upcoming-background: #333333;
+      --button-background: #333333;
+    }
+    #tetris   { margin: 1em auto; padding: 1em; border: 4px solid var(--border-color); border-radius: 10px; background-color: var(--panel-background); }
     #stats    { display: inline-block; vertical-align: top; }
-    #canvas   { display: inline-block; vertical-align: top; background: url(texture.jpg); box-shadow: 10px 10px 10px #999; border: 2px solid #333; }
+    #canvas   { display: inline-block; vertical-align: top; background: var(--canvas-background); box-shadow: 10px 10px 10px var(--canvas-shadow); border: 2px solid var(--border-color); }
     #menu     { display: inline-block; vertical-align: top; position: relative; }
-    #menu p   { margin: 0.5em 0; text-align: center; }
-    #menu p a { text-decoration: none; color: black; }
-    #upcoming { display: block; margin: 0 auto; background-color: #E0E0E0; }
+    #menu p   { margin: 0.5em 0; text-align: center; color: var(--text-color); }
+    #menu p a { text-decoration: none; color: var(--text-color); }
+    #upcoming { display: block; margin: 0 auto; background-color: var(--upcoming-background); }
+    #theme-toggle { border: 1px solid var(--border-color); border-radius: 50%; background: var(--button-background); color: var(--text-color); cursor: pointer; font-size: 1em; padding: 0.2em 0.45em; }
     #score    { color: blue; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
@@ -29,6 +51,7 @@
   <div id="tetris">
     <div id="menu">
       <p id="start"><a href="javascript:play();">Press Space to Play.</a></p>
+      <p><button id="theme-toggle" type="button" aria-label="Ativar modo noturno">Lua</button></p>
       <p><canvas id="upcoming"></canvas></p>
       <p>score <span id="score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
