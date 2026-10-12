@@ -36,6 +36,31 @@
     #theme-toggle { position: absolute; top: 0.5em; right: 0.5em; border: 1px solid var(--border-color); border-radius: 50%; background: var(--button-background); color: var(--text-color); cursor: pointer; font-size: 1em; line-height: 1; padding: 0.3em; }
     #score    { color: blue; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
+    #court    { display: inline-block; vertical-align: top; position: relative; }
+    #msg      { position: absolute; top: 45%; left: 50%; width: 80%; padding: 0.4em 0.2em; border-radius: 12px; text-align: center; font-size: 1.1em; font-weight: bold; color: #FFF; text-shadow: 2px 2px 0 rgba(0,0,0,0.35); pointer-events: none; opacity: 0; z-index: 10; }
+    #msg.bem      { background: #27ae60; border: 3px solid #1e8449; }
+    #msg.parabens { background: #f39c12; border: 3px solid #d35400; }
+    #msg.perfeito { background: linear-gradient(90deg, #e74c3c, #f39c12, #f1c40f, #2ecc71, #3498db, #9b59b6); border: 3px solid #FFF; }
+    #msg.meta     { background: #8e44ad; border: 3px solid gold; font-size: 1.2em; }
+    #msg.animar      { animation: aparecer 1.6s ease-out forwards; }
+    #msg.meta.animar { animation: aparecer 2.2s ease-out forwards, brilho 0.3s ease-in-out 6 alternate; }
+    #canvas.piscar   { animation: piscar 0.4s ease-out; }
+
+    @keyframes aparecer {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(-10deg); }
+      15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25) rotate(3deg); }
+      25%  { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+      75%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -180%) scale(0.8); }
+    }
+    @keyframes brilho {
+      from { box-shadow: 0 0 5px 2px gold; }
+      to   { box-shadow: 0 0 30px 10px gold; }
+    }
+    @keyframes piscar {
+      0%   { box-shadow: 0 0 30px 8px #FFF; }
+      100% { box-shadow: 10px 10px 10px var(--canvas-shadow); }
+    }
     #stats    { position: absolute; bottom: 0em; right: 1em; }
     #high-score {
       color:green; font-weight: bold; vertical-align: middle;
@@ -134,7 +159,7 @@
 
     // mensagens que aparecem quando completa linha
     var mensagens = ['Muito bem!', 'Parabéns!', 'Perfeito!'];
-    var msgTimer;
+    var tipos     = ['bem', 'parabens', 'perfeito'];
     var meta = 5;
 
     //-------------------------------------------------------------------------
@@ -361,7 +386,7 @@
       clearRows();
       clearScore();
       setMeta(5);
-      hide('msg');
+      get('msg').className = '';
       setCurrentPiece(next);
       setNextPiece();
     }
@@ -452,22 +477,28 @@
         addRows(n);
         addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
         if (rows >= meta) {
-          mostrarMensagem('Parabéns! Meta de ' + meta + ' linhas!');
+          mostrarMensagem('Parabéns!<br>Meta de ' + meta + ' linhas!', 'meta');
           setMeta(meta + 5);
         }
         else {
-          mostrarMensagem(mensagens[Math.min(n, 3) - 1]);
+          var i = Math.min(n, 3) - 1;
+          mostrarMensagem(mensagens[i], tipos[i]);
         }
       }
     }
 
     function setMeta(n) { meta = n; html('meta', meta); }
 
-    function mostrarMensagem(texto) {
-      html('msg', texto);
-      show('msg');
-      clearTimeout(msgTimer);
-      msgTimer = setTimeout(function() { hide('msg'); }, 1500);
+    function mostrarMensagem(texto, tipo) {
+      var msg = get('msg');
+      msg.innerHTML = texto;
+      msg.className = tipo;
+      void msg.offsetWidth;
+      msg.className = tipo + ' animar';
+
+      canvas.classList.remove('piscar');
+      void canvas.offsetWidth;
+      canvas.classList.add('piscar');
     }
 
     function removeLine(n) {
