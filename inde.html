@@ -85,6 +85,7 @@
       <p>score <span id="score">00000</span></p>
       <p>score record <span id="high-score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
+      <p>pieces <span id="pieces">0</span></p>
       <p>meta <span id="meta">5</span></p>
     </div>
     <div id="court">
@@ -156,6 +157,7 @@
 
     var highScore = Number(localStorage.getItem('highScore')) || 0;
     var darkMode = false;
+    var pieceCount = 0;
 
     // mensagens que aparecem quando completa linha
     var mensagens = ['Muito bem!', 'Parabéns!', 'Perfeito!'];
@@ -385,6 +387,8 @@
       clearBlocks();
       clearRows();
       clearScore();
+      pieceCount = 0;
+      html('pieces', pieceCount);
       setMeta(5);
       get('msg').className = '';
       setCurrentPiece(next);
