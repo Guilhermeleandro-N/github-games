@@ -72,6 +72,66 @@
     @media screen and (min-width: 700px) and (min-height: 700px)  { #tetris { font-size: 1.75em; width: 650px; } #menu { width: 300px; height: 600px; } #upcoming { width: 150px; height: 150px; } #canvas { width: 300px; height: 600px; } } /* 30px chunks */
     @media screen and (min-width: 800px) and (min-height: 800px)  { #tetris { font-size: 2.00em; width: 750px; } #menu { width: 350px; height: 700px; } #upcoming { width: 175px; height: 175px; } #canvas { width: 350px; height: 700px; } } /* 35px chunks */
     @media screen and (min-width: 900px) and (min-height: 900px)  { #tetris { font-size: 2.25em; width: 850px; } #menu { width: 400px; height: 800px; } #upcoming { width: 200px; height: 200px; } #canvas { width: 400px; height: 800px; } } /* 40px chunks */
+
+    /* Style do modal de confirmação de reinício do jogo */
+    #restart-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(0, 0, 0, 0.65);
+    }
+
+    #restart-modal.visible {
+      display: flex;
+    }
+
+    #restart-dialog {
+      width: min(90%, 360px);
+      padding: 1.5em;
+      border: 2px solid #333;
+      border-radius: 12px;
+      background-color: #F8F8F8;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      color: #222;
+      text-align: center;
+    }
+
+    #restart-dialog h2 {
+      margin: 0 0 0.75em;
+      color: #333;
+      font-size: 1.25em;
+    }
+
+    #restart-dialog p {
+      margin: 0 0 1.5em;
+    }
+
+    #restart-dialog button {
+      min-width: 110px;
+      margin: 0 0.35em;
+      padding: 0.65em 1em;
+      border: 0;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-weight: bold;
+    }
+
+    #restart-cancel {
+      background-color: #777;
+    }
+
+    #restart-confirm {
+      background-color: #c0392b;
+    }
+
+    #restart-dialog button:hover {
+      filter: brightness(0.9);
+    }
   </style>
 </head>
 
@@ -92,6 +152,15 @@
         Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
       </canvas>
       <div id="msg"></div>
+    </div>
+  </div>
+
+  <div id="restart-modal" role="dialog" aria-modal="true" aria-labelledby="restart-title">
+    <div id="restart-dialog">
+      <h2 id="restart-title">Reiniciar partida?</h2>
+      <p>Tem certeza que deseja reiniciar a partida?</p>
+      <button id="restart-cancel" type="button">Cancelar</button>
+      <button id="restart-confirm" type="button">Reiniciar</button>
     </div>
   </div>
 
@@ -275,6 +344,9 @@
       document.addEventListener('keydown', keydown, false);
       window.addEventListener('resize', resize, false);
       get('theme-toggle').addEventListener('click', toggleTheme, false);
+
+      get('restart-cancel').addEventListener('click', closeRestartModal, false);
+      get('restart-confirm').addEventListener('click', confirmRestart, false);
     }
 
     function resize(event) {
@@ -335,9 +407,17 @@
     function requestRestart() {
         if (!playing && !paused) return;
 
-        if (window.confirm('Tem certeza que deseja reiniciar a partida?')) {
-          restartGame();
-        }
+        get('restart-modal').classList.add('visible');
+        get('restart-confirm').focus();
+      }
+
+      function closeRestartModal() {
+        get('restart-modal').classList.remove('visible');
+      }
+
+      function confirmRestart() {
+        closeRestartModal();
+        restartGame();
       }
 
       function restartGame() {
