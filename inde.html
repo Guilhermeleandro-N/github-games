@@ -447,6 +447,8 @@
       if (!move(DIR.DOWN)) {
         addScore(10);
         dropPiece();
+        pieceCount++;
+        html('pieces', pieceCount);
         removeLines();
         setCurrentPiece(next);
         setNextPiece(randomPiece());
