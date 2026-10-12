@@ -37,11 +37,11 @@
     #score    { color: blue; font-weight: bold; vertical-align: middle; }
     #rows     { color: blue; font-weight: bold; vertical-align: middle; }
     #court    { display: inline-block; vertical-align: top; position: relative; }
-    #msg      { position: absolute; top: 45%; left: 50%; width: 80%; padding: 0.4em 0.2em; border-radius: 12px; text-align: center; font-size: 1.1em; font-weight: bold; color: #FFF; text-shadow: 2px 2px 0 rgba(0,0,0,0.35); pointer-events: none; opacity: 0; z-index: 10; }
-    #msg.bem      { background: #27ae60; border: 3px solid #1e8449; }
-    #msg.parabens { background: #f39c12; border: 3px solid #d35400; }
-    #msg.perfeito { background: linear-gradient(90deg, #e74c3c, #f39c12, #f1c40f, #2ecc71, #3498db, #9b59b6); border: 3px solid #FFF; }
-    #msg.meta     { background: #8e44ad; border: 3px solid gold; font-size: 1.2em; }
+    #msg      { position: absolute; top: 45%; left: 50%; width: 100%; text-align: center; font-size: 1.4em; font-weight: bold; pointer-events: none; opacity: 0; z-index: 10; text-shadow: 2px 2px 4px #000; }
+    #msg.bem      { color: #2ecc71; }
+    #msg.parabens { color: #f39c12; }
+    #msg.perfeito { color: #f1c40f; }
+    #msg.meta     { color: #e74c3c; font-size: 1.5em; }
     #msg.animar      { animation: aparecer 1.6s ease-out forwards; }
     #msg.meta.animar { animation: aparecer 2.2s ease-out forwards, brilho 0.3s ease-in-out 6 alternate; }
     #canvas.piscar   { animation: piscar 0.4s ease-out; }
