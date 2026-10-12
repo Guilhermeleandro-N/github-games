@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Javascript Tetris</title>
   <style>
     :root {
@@ -59,10 +60,14 @@
       <p>score <span id="score">00000</span></p>
       <p>score record <span id="high-score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
+      <p>meta <span id="meta">5</span></p>
     </div>
-    <canvas id="canvas">
-      Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
-    </canvas>
+    <div id="court">
+      <canvas id="canvas">
+        Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
+      </canvas>
+      <div id="msg"></div>
+    </div>
   </div>
 
   <script src="stats.js"></script>
@@ -126,6 +131,11 @@
 
     var highScore = Number(localStorage.getItem('highScore')) || 0;
     var darkMode = false;
+
+    // mensagens que aparecem quando completa linha
+    var mensagens = ['Muito bem!', 'Parabéns!', 'Perfeito!'];
+    var msgTimer;
+    var meta = 5;
 
     //-------------------------------------------------------------------------
     // tetris pieces
@@ -350,6 +360,8 @@
       clearBlocks();
       clearRows();
       clearScore();
+      setMeta(5);
+      hide('msg');
       setCurrentPiece(next);
       setNextPiece();
     }
@@ -439,7 +451,23 @@
       if (n > 0) {
         addRows(n);
         addScore(100*Math.pow(2,n-1)); // 1: 100, 2: 200, 3: 400, 4: 800
+        if (rows >= meta) {
+          mostrarMensagem('Parabéns! Meta de ' + meta + ' linhas!');
+          setMeta(meta + 5);
+        }
+        else {
+          mostrarMensagem(mensagens[Math.min(n, 3) - 1]);
+        }
       }
+    }
+
+    function setMeta(n) { meta = n; html('meta', meta); }
+
+    function mostrarMensagem(texto) {
+      html('msg', texto);
+      show('msg');
+      clearTimeout(msgTimer);
+      msgTimer = setTimeout(function() { hide('msg'); }, 1500);
     }
 
     function removeLine(n) {
