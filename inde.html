@@ -266,6 +266,7 @@
     var v = { size: 5, blocks: [0x1F00000, 0x108421, 0x1F, 0x1084210], color: 'indigo' }; // linha de 5
     var r = { size: 4, blocks: [0xCCCC, 0xFF00, 0x3333, 0xFF  ], color: 'orange'  }; // retangulo 2 colunas x 4 linhas
     var g = { size: 3, blocks: [0x1D2,  0x79,   0x97,   0x13C ], color: 'red'     }; // T grande
+    var linha3 = { size: 3, blocks: [0x1C0, 0x49, 0x7, 0x124], color: 'steelblue' }; // linha de 3
 
     //------------------------------------------------
     // do the bit manipulation and iterate through each
@@ -308,7 +309,8 @@
     function randomPiece() {
       if (pieces.length == 0)
         pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z,
-                  w,w,w,w,q,q,q,q,m,m,m,m,d,d,d,d,v,v,v,v,r,r,r,r,g,g,g,g];
+                  w,w,w,w,q,q,q,q,m,m,m,m,d,d,d,d,v,v,v,v,r,r,r,r,g,g,g,g,
+                  linha3,linha3,linha3,linha3];
       var type = pieces.splice(random(0, pieces.length-1), 1)[0];
       return { type: type, dir: DIR.UP, x: Math.round(random(0, nx - type.size)), y: 0 };
     }
