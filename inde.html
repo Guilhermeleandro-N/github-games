@@ -237,37 +237,45 @@
     // tetris pieces
     //
     // blocks: each element represents a rotation of the piece (0, 90, 180, 270)
-    //         each element is a 16 bit integer where the 16 bits represent
-    //         a 4x4 set of blocks, e.g. j.blocks[0] = 0x44C0
+    //         each element is an integer whose `size*size` bits represent a
+    //         `size`x`size` grid of blocks (bit mais significativo = canto
+    //         superior esquerdo; cada linha ocupa `size` bits), ex.: uma peça
+    //         `size` 3 "j" com células em (0,1),(1,1),(2,0),(2,1) vira
     //
-    //             0100 = 0x4 << 3 = 0x4000
-    //             0100 = 0x4 << 2 = 0x0400
-    //             1100 = 0xC << 1 = 0x00C0
-    //             0000 = 0x0 << 0 = 0x0000
+    //             010 = 0x2 << 6 = 0x080
+    //             010 = 0x2 << 3 = 0x010
+    //             110 = 0x6 << 0 = 0x006
     //                               ------
-    //                               0x44C0
+    //                               0x096
     //
     //-------------------------------------------------------------------------
 
     var i = { size: 4, blocks: [0x0F00, 0x2222, 0x00F0, 0x4444], color: 'purple'   };
-    var j = { size: 3, blocks: [0x44C0, 0x8E00, 0x6440, 0x0E20], color: 'pink'   };
-    var l = { size: 3, blocks: [0x4460, 0x0E80, 0xC440, 0x2E00], color: 'salmon' };
-    var o = { size: 2, blocks: [0xCC00, 0xCC00, 0xCC00, 0xCC00], color: 'lime' };
-    var s = { size: 3, blocks: [0x06C0, 0x8C40, 0x6C00, 0x4620], color: 'teal'  };
-    var t = { size: 3, blocks: [0x0E40, 0x4C40, 0x4E00, 0x4640], color: 'coral' };
-    var z = { size: 3, blocks: [0x0C60, 0x4C80, 0xC600, 0x2640], color: 'olive'    };
+    var j = { size: 3, blocks: [0x96,   0x138,  0xD2,   0x39  ], color: 'pink'   };
+    var l = { size: 3, blocks: [0x93,   0x3C,   0x192,  0x78  ], color: 'salmon' };
+    var o = { size: 2, blocks: [0xF,    0xF,    0xF,    0xF   ], color: 'lime' };
+    var s = { size: 3, blocks: [0x1E,   0x132,  0xF0,   0x99  ], color: 'teal'  };
+    var t = { size: 3, blocks: [0x3A,   0xB2,   0xB8,   0x9A  ], color: 'coral' };
+    var z = { size: 3, blocks: [0x33,   0xB4,   0x198,  0x5A  ], color: 'olive'    };
+
+    // peças adicionais
+    var w = { size: 3, blocks: [0x1C8,  0x4B,   0x27,   0x1A4 ], color: 'gold'    }; // L horizontal: 2 para o lado e 3 na linha
+    var q = { size: 3, blocks: [0x1FF,  0x1FF,  0x1FF,  0x1FF ], color: 'cyan'    }; // quadrado 3x3 (9 blocos)
+    var m = { size: 3, blocks: [0x127,  0x1E4,  0x1C9,  0x4F  ], color: 'brown'   }; // L grande: 3 na coluna e 3 na linha
+    var d = { size: 2, blocks: [0xC,    0x5,    0x3,    0xA   ], color: 'magenta' }; // linha de 2
+    var v = { size: 5, blocks: [0x1F00000, 0x108421, 0x1F, 0x1084210], color: 'indigo' }; // linha de 5
 
     //------------------------------------------------
     // do the bit manipulation and iterate through each
     // occupied block (x,y) for a given piece
     //------------------------------------------------
     function eachblock(type, x, y, dir, fn) {
-      var bit, result, row = 0, col = 0, blocks = type.blocks[dir];
-      for(bit = 0x8000 ; bit > 0 ; bit = bit >> 1) {
+      var bit, row = 0, col = 0, blocks = type.blocks[dir], size = type.size;
+      for(bit = 1 << (size*size - 1) ; bit > 0 ; bit = bit >> 1) {
         if (blocks & bit) {
           fn(x + col, y + row);
         }
-        if (++col === 4) {
+        if (++col === size) {
           col = 0;
           ++row;
         }
@@ -297,7 +305,8 @@
     var pieces = [];
     function randomPiece() {
       if (pieces.length == 0)
-        pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z];
+        pieces = [i,i,i,i,j,j,j,j,l,l,l,l,o,o,o,o,s,s,s,s,t,t,t,t,z,z,z,z,
+                  w,w,w,w,q,q,q,q,m,m,m,m,d,d,d,d,v,v,v,v];
       var type = pieces.splice(random(0, pieces.length-1), 1)[0];
       return { type: type, dir: DIR.UP, x: Math.round(random(0, nx - type.size)), y: 0 };
     }
