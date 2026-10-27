@@ -33,7 +33,7 @@
         --body-pad: clamp(0.35rem, 0.9vw, 0.8rem);
         --cab-pad: clamp(0.45rem, 0.9vw, 0.8rem);
         --cab-gap: clamp(0.5rem, 1.2vw, 1.25rem);
-        --side-w: clamp(18rem, 40vw, 42rem);
+        --side-w: clamp(17rem, 30vw, 30rem);
         --cabinet-max: 72rem;
         --frame-w: calc(
           2 * var(--body-pad) + 2 * var(--cab-pad) + var(--cab-gap) + 2px
@@ -950,6 +950,17 @@
       /* ---------------------------------------------------------------------
        responsive: one real breakpoint
        --------------------------------------------------------------------- */
+
+      /* narrow desktop: two control columns, last item spans both */
+      @media (min-width: 1180px) and (max-width: 1399px) {
+        .keys {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .keys li:last-child {
+          grid-column: 1 / -1;
+        }
+      }
 
       /* tablet: one column, board on top and a horizontal HUD band below */
       @media (min-width: 721px) and (max-width: 1023px) {
