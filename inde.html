@@ -810,12 +810,33 @@
       var AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext && !audioContext)
         audioContext = new AudioContext();
+      if (audioContext)
+        resumeAudio();
+    }
+
+    function resumeAudio(onResumed) {
+      if (audioContext.state === 'running') {
+        if (onResumed)
+          onResumed();
+        return;
+      }
+
+      audioContext.resume().then(function() {
+        if (audioContext.state === 'running' && onResumed)
+          onResumed();
+      }, function(error) {
+        console.error('Unable to resume audio playback:', error);
+      });
     }
 
     function playScoreSound() {
       if (!audioContext)
         return;
 
+      resumeAudio(playScoreTone);
+    }
+
+    function playScoreTone() {
       var oscillator = audioContext.createOscillator();
       var gain = audioContext.createGain();
       var now = audioContext.currentTime;
@@ -1094,4 +1115,3 @@
 
 feat/traducao-pt
 </html>
-
