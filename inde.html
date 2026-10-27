@@ -4,6 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tetris — arcade edition</title>
+    <script>
+      // Apply the stored theme before the first paint to avoid a flash.
+      (function () {
+        try {
+          if (localStorage.getItem("tetris-theme") === "light") {
+            document.documentElement.classList.add("theme-light");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070a14'/%3E%3Crect x='7' y='7' width='8' height='8' rx='2' fill='%2322d3ee'/%3E%3Crect x='17' y='7' width='8' height='8' rx='2' fill='%23f472b6'/%3E%3Crect x='7' y='17' width='8' height='8' rx='2' fill='%23a3e635'/%3E%3Crect x='17' y='17' width='8' height='8' rx='2' fill='%2322d3ee'/%3E%3C/svg%3E"
@@ -14,6 +24,7 @@
     />
     <style>
       :root {
+        /* palette tokens: dark is the default (neon arcade) */
         --bg-0: #070a14;
         --bg-1: #0d1226;
         --panel: rgba(13, 18, 38, 0.82);
@@ -26,6 +37,244 @@
         --magenta: #f472b6;
         --violet: #e879f9;
         --lime: #a3e635;
+        --danger: #fb7185;
+
+        /* surfaces */
+        --selection-bg: rgba(34, 211, 238, 0.35);
+        --selection-ink: #fff;
+        --page-bg:
+          radial-gradient(
+            ellipse at center,
+            transparent 42%,
+            rgba(0, 0, 0, 0.55) 100%
+          ),
+          radial-gradient(
+            1200px 720px at 12% -12%,
+            rgba(34, 211, 238, 0.16),
+            transparent 62%
+          ),
+          radial-gradient(
+            960px 620px at 102% 8%,
+            rgba(232, 121, 249, 0.12),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 520px at 48% 122%,
+            rgba(163, 230, 53, 0.07),
+            transparent 62%
+          ),
+          linear-gradient(160deg, var(--bg-0), var(--bg-1) 55%, #060912);
+        --page-grid: rgba(148, 163, 184, 0.06);
+        --page-drift:
+          radial-gradient(
+            circle at 28% 32%,
+            rgba(34, 211, 238, 0.08),
+            transparent 42%
+          ),
+          radial-gradient(
+            circle at 72% 68%,
+            rgba(244, 114, 182, 0.07),
+            transparent 42%
+          );
+        --cabinet-bg:
+          radial-gradient(
+            120% 80% at 50% 0%,
+            rgba(34, 211, 238, 0.09),
+            transparent 62%
+          ),
+          linear-gradient(
+            180deg,
+            rgba(19, 28, 56, 0.94),
+            rgba(7, 11, 24, 0.97)
+          );
+        --cabinet-shadow:
+          0 0 0 1px rgba(4, 7, 15, 0.9),
+          0 26px 70px rgba(0, 0, 0, 0.66),
+          0 0 46px rgba(34, 211, 238, 0.13),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          inset 0 0 70px rgba(34, 211, 238, 0.05);
+        --cabinet-frame: rgba(255, 255, 255, 0.06);
+        --cabinet-scanline: rgba(255, 255, 255, 0.035);
+
+        /* masthead */
+        --title-gradient: linear-gradient(
+          180deg,
+          #ffffff 0%,
+          #d9fbff 42%,
+          var(--cyan) 100%
+        );
+        --title-filter:
+          drop-shadow(0 0 6px rgba(34, 211, 238, 0.65))
+          drop-shadow(0 0 24px rgba(34, 211, 238, 0.32));
+        --title-glow-1: rgba(34, 211, 238, 0.55);
+        --title-glow-2: rgba(34, 211, 238, 0.25);
+        --title-glow-3: rgba(34, 211, 238, 0.8);
+        --title-glow-4: rgba(34, 211, 238, 0.42);
+        --subtitle-glow: rgba(244, 114, 182, 0.45);
+        --subtitle-rule: rgba(244, 114, 182, 0.7);
+
+        /* board + overlays */
+        --court-bg:
+          radial-gradient(
+            ellipse at 50% 0%,
+            rgba(34, 211, 238, 0.09),
+            transparent 58%
+          ),
+          #04070f;
+        --court-shadow:
+          inset 0 0 0 1px rgba(34, 211, 238, 0.3),
+          inset 0 0 34px rgba(0, 0, 0, 0.85),
+          0 0 26px rgba(34, 211, 238, 0.13);
+        --canvas-bg: #070b17;
+        --canvas-shadow:
+          0 0 0 1px rgba(148, 163, 184, 0.22),
+          0 0 30px rgba(34, 211, 238, 0.17);
+        --piscar-ring: rgba(163, 230, 53, 0.9);
+        --piscar-glow: rgba(163, 230, 53, 0.55);
+        --overlay-bg: radial-gradient(
+          ellipse at center,
+          rgba(7, 10, 20, 0.12) 0%,
+          rgba(7, 10, 20, 0.34) 62%,
+          rgba(7, 10, 20, 0.55) 100%
+        );
+        --start-border: rgba(34, 211, 238, 0.42);
+        --start-bg: linear-gradient(
+          180deg,
+          rgba(14, 21, 44, 0.95),
+          rgba(8, 12, 26, 0.97)
+        );
+        --start-shadow:
+          0 0 26px rgba(34, 211, 238, 0.16),
+          0 10px 30px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        --start-state-glow: rgba(163, 230, 53, 0.5);
+        --paused-border: rgba(244, 114, 182, 0.5);
+        --paused-shadow:
+          0 0 26px rgba(244, 114, 182, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        --paused-glow: rgba(244, 114, 182, 0.55);
+        --over-border: rgba(251, 113, 133, 0.55);
+        --over-shadow:
+          0 0 30px rgba(251, 113, 133, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        --over-glow: rgba(251, 113, 133, 0.6);
+        --link-hover-bg: rgba(34, 211, 238, 0.08);
+
+        /* keycaps */
+        --kbd-ink: #dff8ff;
+        --kbd-bg: linear-gradient(
+          180deg,
+          rgba(30, 41, 70, 0.95),
+          rgba(12, 18, 36, 0.95)
+        );
+        --kbd-border: rgba(148, 163, 184, 0.35);
+        --kbd-border-bottom: rgba(148, 163, 184, 0.18);
+        --kbd-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.08) inset,
+          0 2px 0 rgba(0, 0, 0, 0.55);
+
+        /* floating messages */
+        --msg-ink: #fff;
+        --msg-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+        --msg-bem-border: rgba(163, 230, 53, 0.7);
+        --msg-bem-bg: linear-gradient(
+          180deg,
+          rgba(163, 230, 53, 0.24),
+          rgba(9, 22, 14, 0.94)
+        );
+        --msg-bem-shadow: 0 0 24px rgba(163, 230, 53, 0.25);
+        --msg-parabens-border: rgba(34, 211, 238, 0.7);
+        --msg-parabens-bg: linear-gradient(
+          180deg,
+          rgba(34, 211, 238, 0.24),
+          rgba(7, 20, 30, 0.94)
+        );
+        --msg-parabens-shadow: 0 0 24px rgba(34, 211, 238, 0.25);
+        --msg-perfeito-border: rgba(232, 121, 249, 0.8);
+        --msg-perfeito-bg:
+          linear-gradient(
+            100deg,
+            rgba(34, 211, 238, 0.2),
+            rgba(232, 121, 249, 0.28),
+            rgba(163, 230, 53, 0.2)
+          ),
+          rgba(8, 11, 24, 0.94);
+        --msg-perfeito-shadow: 0 0 28px rgba(232, 121, 249, 0.3);
+        --msg-meta-border: rgba(244, 114, 182, 0.85);
+        --msg-meta-bg: linear-gradient(
+          180deg,
+          rgba(244, 114, 182, 0.28),
+          rgba(24, 8, 22, 0.95)
+        );
+        --msg-meta-shadow: 0 0 30px rgba(244, 114, 182, 0.32);
+        --brilho-a: rgba(244, 114, 182, 0.4);
+        --brilho-b: rgba(244, 114, 182, 0.65);
+
+        /* side panel */
+        --card-bg: linear-gradient(
+          180deg,
+          rgba(17, 25, 48, 0.85),
+          rgba(8, 12, 26, 0.9)
+        );
+        --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        --next-border: rgba(34, 211, 238, 0.22);
+        --upcoming-bg: #060a14;
+        --upcoming-shadow:
+          inset 0 0 0 1px rgba(34, 211, 238, 0.22),
+          0 0 18px rgba(34, 211, 238, 0.1);
+        --score-border: rgba(34, 211, 238, 0.34);
+        --score-bg:
+          linear-gradient(180deg, rgba(34, 211, 238, 0.1), transparent 70%),
+          linear-gradient(
+            180deg,
+            rgba(17, 25, 48, 0.9),
+            rgba(8, 12, 26, 0.94)
+          );
+        --score-shadow:
+          0 0 22px rgba(34, 211, 238, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        --score-hero-shadow: 0 0 18px rgba(34, 211, 238, 0.45);
+        --divider: rgba(148, 163, 184, 0.18);
+        --highscore-shadow: 0 0 12px rgba(163, 230, 53, 0.3);
+        --meta-shadow: 0 0 12px rgba(244, 114, 182, 0.3);
+        --goal-track-bg: rgba(148, 163, 184, 0.16);
+        --goal-track-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+        --goal-glow: 0 0 10px rgba(244, 114, 182, 0.55);
+        --debug-ink: rgba(159, 176, 208, 0.6);
+        --stats-border: rgba(34, 211, 238, 0.35);
+        --stats-shadow: 0 0 18px rgba(34, 211, 238, 0.2);
+
+        /* restart modal */
+        --modal-veil: rgba(3, 6, 14, 0.78);
+        --dialog-border: rgba(244, 114, 182, 0.42);
+        --dialog-bg:
+          radial-gradient(
+            120% 80% at 50% 0%,
+            rgba(244, 114, 182, 0.12),
+            transparent 60%
+          ),
+          linear-gradient(180deg, #111a36, #080c1a);
+        --dialog-shadow:
+          0 0 42px rgba(244, 114, 182, 0.18),
+          0 26px 64px rgba(0, 0, 0, 0.72),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        --dialog-title-ink: #fff;
+        --dialog-title-shadow: 0 0 16px rgba(244, 114, 182, 0.4);
+        --cancel-bg: rgba(148, 163, 184, 0.1);
+        --cancel-border: rgba(148, 163, 184, 0.35);
+        --confirm-ink: #1a0714;
+        --confirm-bg: linear-gradient(180deg, #f9a8d4, var(--magenta));
+        --confirm-shadow: 0 0 20px rgba(244, 114, 182, 0.35);
+
+        /* theme toggle */
+        --theme-bg: rgba(8, 12, 26, 0.72);
+        --theme-border: rgba(34, 211, 238, 0.55);
+        --theme-ink: var(--cyan);
+        --theme-shadow:
+          0 0 16px rgba(34, 211, 238, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        --theme-glow: rgba(34, 211, 238, 0.3);
+
         --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
         --display: "Chakra Petch", system-ui, "Segoe UI", Roboto, sans-serif;
 
@@ -50,6 +299,243 @@
         --radius: 20px;
       }
 
+      /* "day arcade": warm paper, dark ink, accents darkened for AA */
+      :root.theme-light {
+        color-scheme: light;
+        --bg-0: #f4efe3;
+        --bg-1: #e9e2d2;
+        --panel: rgba(255, 252, 245, 0.92);
+        --panel-solid: #fffcf5;
+        --line: rgba(15, 23, 42, 0.14);
+        --line-cyan: rgba(12, 107, 133, 0.35);
+        --text: #0f172a;
+        --muted: #475569;
+        --cyan: #0c6b85;
+        --magenta: #be185d;
+        --violet: #7e22ce;
+        --lime: #446f0b;
+        --danger: #b91c1c;
+
+        --selection-bg: rgba(12, 107, 133, 0.22);
+        --selection-ink: #0f172a;
+        --page-bg:
+          radial-gradient(
+            ellipse at center,
+            transparent 42%,
+            rgba(120, 92, 40, 0.12) 100%
+          ),
+          radial-gradient(
+            1200px 720px at 12% -12%,
+            rgba(14, 116, 144, 0.1),
+            transparent 62%
+          ),
+          radial-gradient(
+            960px 620px at 102% 8%,
+            rgba(190, 24, 93, 0.08),
+            transparent 60%
+          ),
+          radial-gradient(
+            760px 520px at 48% 122%,
+            rgba(77, 124, 15, 0.07),
+            transparent 62%
+          ),
+          linear-gradient(160deg, var(--bg-0), var(--bg-1) 55%, #e2d8c5);
+        --page-grid: rgba(15, 23, 42, 0.06);
+        --page-drift:
+          radial-gradient(
+            circle at 28% 32%,
+            rgba(14, 116, 144, 0.06),
+            transparent 42%
+          ),
+          radial-gradient(
+            circle at 72% 68%,
+            rgba(190, 24, 93, 0.05),
+            transparent 42%
+          );
+        --cabinet-bg:
+          radial-gradient(
+            120% 80% at 50% 0%,
+            rgba(14, 116, 144, 0.06),
+            transparent 62%
+          ),
+          linear-gradient(
+            180deg,
+            rgba(255, 252, 245, 0.94),
+            rgba(240, 233, 218, 0.97)
+          );
+        --cabinet-shadow:
+          0 0 0 1px rgba(15, 23, 42, 0.08),
+          0 26px 70px rgba(90, 69, 30, 0.22),
+          0 0 46px rgba(14, 116, 144, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.85),
+          inset 0 0 70px rgba(14, 116, 144, 0.03);
+        --cabinet-frame: rgba(15, 23, 42, 0.08);
+        --cabinet-scanline: rgba(15, 23, 42, 0.022);
+
+        --title-gradient: linear-gradient(
+          180deg,
+          #0f172a 0%,
+          #164e63 50%,
+          var(--cyan) 100%
+        );
+        --title-filter:
+          drop-shadow(0 0 6px rgba(14, 116, 144, 0.18))
+          drop-shadow(0 0 24px rgba(14, 116, 144, 0.1));
+        --title-glow-1: rgba(14, 116, 144, 0.18);
+        --title-glow-2: rgba(14, 116, 144, 0.08);
+        --title-glow-3: rgba(14, 116, 144, 0.28);
+        --title-glow-4: rgba(14, 116, 144, 0.14);
+        --subtitle-glow: rgba(190, 24, 93, 0.12);
+        --subtitle-rule: rgba(190, 24, 93, 0.45);
+
+        --court-bg:
+          radial-gradient(
+            ellipse at 50% 0%,
+            rgba(14, 116, 144, 0.05),
+            transparent 58%
+          ),
+          #fbf7ec;
+        --court-shadow:
+          inset 0 0 0 1px rgba(15, 23, 42, 0.12),
+          inset 0 0 34px rgba(120, 92, 40, 0.1),
+          0 0 26px rgba(14, 116, 144, 0.08);
+        --canvas-bg: #fbf7ec;
+        --canvas-shadow:
+          0 0 0 1px rgba(15, 23, 42, 0.14),
+          0 0 30px rgba(14, 116, 144, 0.1);
+        --piscar-ring: rgba(68, 111, 11, 0.55);
+        --piscar-glow: rgba(68, 111, 11, 0.22);
+        --overlay-bg: rgba(244, 239, 227, 0.72);
+        --start-border: rgba(14, 116, 144, 0.35);
+        --start-bg: linear-gradient(
+          180deg,
+          rgba(255, 252, 245, 0.97),
+          rgba(241, 234, 219, 0.98)
+        );
+        --start-shadow:
+          0 0 26px rgba(14, 116, 144, 0.1),
+          0 10px 30px rgba(90, 69, 30, 0.16),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --start-state-glow: rgba(68, 111, 11, 0.14);
+        --paused-border: rgba(190, 24, 93, 0.42);
+        --paused-shadow:
+          0 0 26px rgba(190, 24, 93, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --paused-glow: rgba(190, 24, 93, 0.14);
+        --over-border: rgba(185, 28, 28, 0.45);
+        --over-shadow:
+          0 0 30px rgba(185, 28, 28, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --over-glow: rgba(185, 28, 28, 0.14);
+        --link-hover-bg: rgba(14, 116, 144, 0.1);
+
+        --kbd-ink: #0f172a;
+        --kbd-bg: linear-gradient(180deg, #fffdf7, #efe7d5);
+        --kbd-border: rgba(15, 23, 42, 0.25);
+        --kbd-border-bottom: rgba(15, 23, 42, 0.15);
+        --kbd-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.95) inset,
+          0 2px 0 rgba(15, 23, 42, 0.18);
+
+        --msg-ink: #0f172a;
+        --msg-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+        --msg-bem-border: rgba(68, 111, 11, 0.55);
+        --msg-bem-bg: linear-gradient(
+          180deg,
+          rgba(68, 111, 11, 0.18),
+          rgba(250, 247, 236, 0.96)
+        );
+        --msg-bem-shadow: 0 0 24px rgba(68, 111, 11, 0.16);
+        --msg-parabens-border: rgba(12, 107, 133, 0.55);
+        --msg-parabens-bg: linear-gradient(
+          180deg,
+          rgba(12, 107, 133, 0.18),
+          rgba(250, 247, 236, 0.96)
+        );
+        --msg-parabens-shadow: 0 0 24px rgba(12, 107, 133, 0.14);
+        --msg-perfeito-border: rgba(126, 34, 206, 0.55);
+        --msg-perfeito-bg:
+          linear-gradient(
+            100deg,
+            rgba(12, 107, 133, 0.12),
+            rgba(190, 24, 93, 0.14),
+            rgba(68, 111, 11, 0.12)
+          ),
+          rgba(255, 252, 245, 0.96);
+        --msg-perfeito-shadow: 0 0 28px rgba(126, 34, 206, 0.16);
+        --msg-meta-border: rgba(190, 24, 93, 0.6);
+        --msg-meta-bg: linear-gradient(
+          180deg,
+          rgba(190, 24, 93, 0.16),
+          rgba(255, 252, 245, 0.97)
+        );
+        --msg-meta-shadow: 0 0 30px rgba(190, 24, 93, 0.18);
+        --brilho-a: rgba(190, 24, 93, 0.2);
+        --brilho-b: rgba(190, 24, 93, 0.35);
+
+        --card-bg: linear-gradient(
+          180deg,
+          rgba(255, 252, 245, 0.94),
+          rgba(247, 241, 229, 0.96)
+        );
+        --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --next-border: rgba(14, 116, 144, 0.25);
+        --upcoming-bg: #fbf7ec;
+        --upcoming-shadow:
+          inset 0 0 0 1px rgba(15, 23, 42, 0.12),
+          0 0 18px rgba(14, 116, 144, 0.08);
+        --score-border: rgba(14, 116, 144, 0.32);
+        --score-bg:
+          linear-gradient(180deg, rgba(14, 116, 144, 0.08), transparent 70%),
+          linear-gradient(
+            180deg,
+            rgba(255, 252, 245, 0.95),
+            rgba(244, 237, 223, 0.97)
+          );
+        --score-shadow:
+          0 0 22px rgba(14, 116, 144, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --score-hero-shadow: 0 0 18px rgba(12, 107, 133, 0.16);
+        --divider: rgba(15, 23, 42, 0.12);
+        --highscore-shadow: 0 0 12px rgba(68, 111, 11, 0.16);
+        --meta-shadow: 0 0 12px rgba(190, 24, 93, 0.16);
+        --goal-track-bg: rgba(15, 23, 42, 0.1);
+        --goal-track-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.18);
+        --goal-glow: 0 0 10px rgba(190, 24, 93, 0.22);
+        --debug-ink: rgba(71, 85, 105, 0.65);
+        --stats-border: rgba(14, 116, 144, 0.35);
+        --stats-shadow: 0 0 18px rgba(14, 116, 144, 0.15);
+
+        --modal-veil: rgba(244, 239, 227, 0.78);
+        --dialog-border: rgba(190, 24, 93, 0.35);
+        --dialog-bg:
+          radial-gradient(
+            120% 80% at 50% 0%,
+            rgba(190, 24, 93, 0.08),
+            transparent 60%
+          ),
+          linear-gradient(180deg, #fffcf5, #f1eadb);
+        --dialog-shadow:
+          0 0 42px rgba(190, 24, 93, 0.12),
+          0 26px 64px rgba(90, 69, 30, 0.28),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --dialog-title-ink: #0f172a;
+        --dialog-title-shadow: 0 0 16px rgba(190, 24, 93, 0.14);
+        --cancel-bg: rgba(15, 23, 42, 0.06);
+        --cancel-border: rgba(15, 23, 42, 0.25);
+        --confirm-ink: #fff;
+        --confirm-bg: linear-gradient(180deg, #be185d, #9d174d);
+        --confirm-shadow: 0 0 20px rgba(190, 24, 93, 0.24);
+
+        --theme-bg: rgba(255, 252, 245, 0.9);
+        --theme-border: rgba(15, 23, 42, 0.45);
+        --theme-ink: #0f172a;
+        --theme-shadow:
+          0 0 16px rgba(14, 116, 144, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        --theme-glow: rgba(14, 116, 144, 0.18);
+      }
+
       * {
         box-sizing: border-box;
       }
@@ -69,28 +555,7 @@
         position: relative;
         color: var(--text);
         font-family: var(--display);
-        background:
-          radial-gradient(
-            ellipse at center,
-            transparent 42%,
-            rgba(0, 0, 0, 0.55) 100%
-          ),
-          radial-gradient(
-            1200px 720px at 12% -12%,
-            rgba(34, 211, 238, 0.16),
-            transparent 62%
-          ),
-          radial-gradient(
-            960px 620px at 102% 8%,
-            rgba(232, 121, 249, 0.12),
-            transparent 60%
-          ),
-          radial-gradient(
-            760px 520px at 48% 122%,
-            rgba(163, 230, 53, 0.07),
-            transparent 62%
-          ),
-          linear-gradient(160deg, var(--bg-0), var(--bg-1) 55%, #060912);
+        background: var(--page-bg);
         background-attachment: fixed;
       }
 
@@ -101,8 +566,8 @@
         z-index: 0;
         pointer-events: none;
         background-image:
-          linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+          linear-gradient(var(--page-grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--page-grid) 1px, transparent 1px);
         background-size: 44px 44px;
         -webkit-mask-image: radial-gradient(
           ellipse at center,
@@ -122,23 +587,13 @@
         inset: -18%;
         z-index: 0;
         pointer-events: none;
-        background:
-          radial-gradient(
-            circle at 28% 32%,
-            rgba(34, 211, 238, 0.08),
-            transparent 42%
-          ),
-          radial-gradient(
-            circle at 72% 68%,
-            rgba(244, 114, 182, 0.07),
-            transparent 42%
-          );
+        background: var(--page-drift);
         animation: bg-drift 26s ease-in-out infinite alternate;
       }
 
       ::selection {
-        background: rgba(34, 211, 238, 0.35);
-        color: #fff;
+        background: var(--selection-bg);
+        color: var(--selection-ink);
       }
 
       @keyframes bg-drift {
@@ -174,19 +629,8 @@
         padding: var(--cab-pad);
         border: 1px solid var(--line-cyan);
         border-radius: var(--radius);
-        background:
-          radial-gradient(
-            120% 80% at 50% 0%,
-            rgba(34, 211, 238, 0.09),
-            transparent 62%
-          ),
-          linear-gradient(180deg, rgba(19, 28, 56, 0.94), rgba(7, 11, 24, 0.97));
-        box-shadow:
-          0 0 0 1px rgba(4, 7, 15, 0.9),
-          0 26px 70px rgba(0, 0, 0, 0.66),
-          0 0 46px rgba(34, 211, 238, 0.13),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08),
-          inset 0 0 70px rgba(34, 211, 238, 0.05);
+        background: var(--cabinet-bg);
+        box-shadow: var(--cabinet-shadow);
       }
 
       #tetris::before {
@@ -194,7 +638,7 @@
         position: absolute;
         inset: 6px;
         z-index: 0;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--cabinet-frame);
         border-radius: calc(var(--radius) - 7px);
         pointer-events: none;
       }
@@ -209,9 +653,62 @@
         opacity: 0.22;
         background: repeating-linear-gradient(
           0deg,
-          rgba(255, 255, 255, 0.035) 0 1px,
+          var(--cabinet-scanline) 0 1px,
           transparent 1px 4px
         );
+      }
+
+      /* theme toggle: circular, top-right of the cabinet masthead */
+      #theme-toggle {
+        position: absolute;
+        top: calc(var(--cab-pad) + 0.1rem);
+        right: calc(var(--cab-pad) + 0.1rem);
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 1px solid var(--theme-border);
+        border-radius: 50%;
+        background: var(--theme-bg);
+        color: var(--theme-ink);
+        box-shadow: var(--theme-shadow);
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease,
+          border-color 0.15s ease,
+          background 0.15s ease;
+      }
+
+      #theme-toggle:hover {
+        transform: translateY(-1px);
+        box-shadow:
+          0 0 22px var(--theme-glow),
+          var(--theme-shadow);
+      }
+
+      #theme-toggle:active {
+        transform: translateY(0);
+      }
+
+      #theme-toggle:focus-visible {
+        outline: 2px solid var(--theme-ink);
+        outline-offset: 3px;
+        border-radius: 50%;
+      }
+
+      #theme-toggle svg {
+        display: block;
+        width: 20px;
+        height: 20px;
+      }
+
+      #theme-toggle svg[hidden] {
+        display: none;
       }
 
       .masthead {
@@ -231,17 +728,11 @@
         line-height: 0.9;
         letter-spacing: 0.14em;
         text-indent: 0.14em;
-        background: linear-gradient(
-          180deg,
-          #ffffff 0%,
-          #d9fbff 42%,
-          var(--cyan) 100%
-        );
+        background: var(--title-gradient);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
-        filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.65))
-          drop-shadow(0 0 24px rgba(34, 211, 238, 0.32));
+        filter: var(--title-filter);
         animation: title-glow 5.5s ease-in-out infinite;
       }
 
@@ -258,7 +749,7 @@
         text-indent: 0.32em;
         text-transform: uppercase;
         color: var(--magenta);
-        text-shadow: 0 0 14px rgba(244, 114, 182, 0.45);
+        text-shadow: 0 0 14px var(--subtitle-glow);
       }
 
       .masthead .subtitle::before,
@@ -269,14 +760,14 @@
         background: linear-gradient(
           90deg,
           transparent,
-          rgba(244, 114, 182, 0.7)
+          var(--subtitle-rule)
         );
       }
 
       .masthead .subtitle::after {
         background: linear-gradient(
           90deg,
-          rgba(244, 114, 182, 0.7),
+          var(--subtitle-rule),
           transparent
         );
       }
@@ -284,13 +775,13 @@
       @keyframes title-glow {
         0%,
         100% {
-          filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.55))
-            drop-shadow(0 0 18px rgba(34, 211, 238, 0.25));
+          filter: drop-shadow(0 0 5px var(--title-glow-1))
+            drop-shadow(0 0 18px var(--title-glow-2));
         }
 
         50% {
-          filter: drop-shadow(0 0 9px rgba(34, 211, 238, 0.8))
-            drop-shadow(0 0 30px rgba(34, 211, 238, 0.42));
+          filter: drop-shadow(0 0 9px var(--title-glow-3))
+            drop-shadow(0 0 30px var(--title-glow-4));
         }
       }
 
@@ -309,26 +800,15 @@
         height: var(--court-h);
         min-width: 0;
         border-radius: 16px;
-        background:
-          radial-gradient(
-            ellipse at 50% 0%,
-            rgba(34, 211, 238, 0.09),
-            transparent 58%
-          ),
-          #04070f;
-        box-shadow:
-          inset 0 0 0 1px rgba(34, 211, 238, 0.3),
-          inset 0 0 34px rgba(0, 0, 0, 0.85),
-          0 0 26px rgba(34, 211, 238, 0.13);
+        background: var(--court-bg);
+        box-shadow: var(--court-shadow);
       }
 
       #canvas {
         display: block;
         border-radius: 10px;
-        background: #070b17;
-        box-shadow:
-          0 0 0 1px rgba(148, 163, 184, 0.22),
-          0 0 30px rgba(34, 211, 238, 0.17);
+        background: var(--canvas-bg);
+        box-shadow: var(--canvas-shadow);
         touch-action: none;
       }
 
@@ -339,14 +819,12 @@
       @keyframes piscar {
         0% {
           box-shadow:
-            0 0 0 1px rgba(163, 230, 53, 0.9),
-            0 0 44px rgba(163, 230, 53, 0.55);
+            0 0 0 1px var(--piscar-ring),
+            0 0 44px var(--piscar-glow);
         }
 
         100% {
-          box-shadow:
-            0 0 0 1px rgba(148, 163, 184, 0.22),
-            0 0 30px rgba(34, 211, 238, 0.17);
+          box-shadow: var(--canvas-shadow);
         }
       }
 
@@ -362,29 +840,17 @@
         place-items: center;
         padding: 0.75rem;
         border-radius: inherit;
-        background: radial-gradient(
-          ellipse at center,
-          rgba(7, 10, 20, 0.12) 0%,
-          rgba(7, 10, 20, 0.34) 62%,
-          rgba(7, 10, 20, 0.55) 100%
-        );
+        background: var(--overlay-bg);
       }
 
       .start-card {
         width: min(94%, 19rem);
         padding: clamp(0.8rem, 1.5vw, 1.1rem) clamp(0.7rem, 1.3vw, 1rem);
         text-align: center;
-        border: 1px solid rgba(34, 211, 238, 0.42);
+        border: 1px solid var(--start-border);
         border-radius: 14px;
-        background: linear-gradient(
-          180deg,
-          rgba(14, 21, 44, 0.95),
-          rgba(8, 12, 26, 0.97)
-        );
-        box-shadow:
-          0 0 26px rgba(34, 211, 238, 0.16),
-          0 10px 30px rgba(0, 0, 0, 0.4),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        background: var(--start-bg);
+        box-shadow: var(--start-shadow);
       }
 
       .start-state {
@@ -395,31 +861,27 @@
         letter-spacing: 0.26em;
         text-indent: 0.26em;
         color: var(--lime);
-        text-shadow: 0 0 14px rgba(163, 230, 53, 0.5);
+        text-shadow: 0 0 14px var(--start-state-glow);
       }
 
       #start.state-paused .start-card {
-        border-color: rgba(244, 114, 182, 0.5);
-        box-shadow:
-          0 0 26px rgba(244, 114, 182, 0.18),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        border-color: var(--paused-border);
+        box-shadow: var(--paused-shadow);
       }
 
       #start.state-paused .start-state {
         color: var(--magenta);
-        text-shadow: 0 0 14px rgba(244, 114, 182, 0.55);
+        text-shadow: 0 0 14px var(--paused-glow);
       }
 
       #start.state-over .start-card {
-        border-color: rgba(251, 113, 133, 0.55);
-        box-shadow:
-          0 0 30px rgba(251, 113, 133, 0.2),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        border-color: var(--over-border);
+        box-shadow: var(--over-shadow);
       }
 
       #start.state-over .start-state {
-        color: #fb7185;
-        text-shadow: 0 0 14px rgba(251, 113, 133, 0.6);
+        color: var(--danger);
+        text-shadow: 0 0 14px var(--over-glow);
       }
 
       .start-hint {
@@ -446,7 +908,7 @@
 
       .start-hint a:hover {
         color: var(--cyan);
-        background: rgba(34, 211, 238, 0.08);
+        background: var(--link-hover-bg);
       }
 
       kbd {
@@ -461,18 +923,12 @@
         font-weight: 500;
         line-height: 1.4;
         text-align: center;
-        color: #dff8ff;
-        background: linear-gradient(
-          180deg,
-          rgba(30, 41, 70, 0.95),
-          rgba(12, 18, 36, 0.95)
-        );
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        border-bottom-color: rgba(148, 163, 184, 0.18);
+        color: var(--kbd-ink);
+        background: var(--kbd-bg);
+        border: 1px solid var(--kbd-border);
+        border-bottom-color: var(--kbd-border-bottom);
         border-radius: 5px;
-        box-shadow:
-          0 1px 0 rgba(255, 255, 255, 0.08) inset,
-          0 2px 0 rgba(0, 0, 0, 0.55);
+        box-shadow: var(--kbd-shadow);
       }
 
       /* ---------------------------------------------------------------------
@@ -493,54 +949,35 @@
         font-size: clamp(0.95rem, 2.6vw, 1.15rem);
         font-weight: 700;
         letter-spacing: 0.04em;
-        color: #fff;
-        text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+        color: var(--msg-ink);
+        text-shadow: var(--msg-shadow);
         pointer-events: none;
         opacity: 0;
         transform: translateX(-50%);
       }
 
       #msg.bem {
-        border-color: rgba(163, 230, 53, 0.7);
-        background: linear-gradient(
-          180deg,
-          rgba(163, 230, 53, 0.24),
-          rgba(9, 22, 14, 0.94)
-        );
-        box-shadow: 0 0 24px rgba(163, 230, 53, 0.25);
+        border-color: var(--msg-bem-border);
+        background: var(--msg-bem-bg);
+        box-shadow: var(--msg-bem-shadow);
       }
 
       #msg.parabens {
-        border-color: rgba(34, 211, 238, 0.7);
-        background: linear-gradient(
-          180deg,
-          rgba(34, 211, 238, 0.24),
-          rgba(7, 20, 30, 0.94)
-        );
-        box-shadow: 0 0 24px rgba(34, 211, 238, 0.25);
+        border-color: var(--msg-parabens-border);
+        background: var(--msg-parabens-bg);
+        box-shadow: var(--msg-parabens-shadow);
       }
 
       #msg.perfeito {
-        border-color: rgba(232, 121, 249, 0.8);
-        background:
-          linear-gradient(
-            100deg,
-            rgba(34, 211, 238, 0.2),
-            rgba(232, 121, 249, 0.28),
-            rgba(163, 230, 53, 0.2)
-          ),
-          rgba(8, 11, 24, 0.94);
-        box-shadow: 0 0 28px rgba(232, 121, 249, 0.3);
+        border-color: var(--msg-perfeito-border);
+        background: var(--msg-perfeito-bg);
+        box-shadow: var(--msg-perfeito-shadow);
       }
 
       #msg.meta {
-        border-color: rgba(244, 114, 182, 0.85);
-        background: linear-gradient(
-          180deg,
-          rgba(244, 114, 182, 0.28),
-          rgba(24, 8, 22, 0.95)
-        );
-        box-shadow: 0 0 30px rgba(244, 114, 182, 0.32);
+        border-color: var(--msg-meta-border);
+        background: var(--msg-meta-bg);
+        box-shadow: var(--msg-meta-shadow);
         font-size: clamp(1rem, 2.8vw, 1.22rem);
       }
 
@@ -582,11 +1019,11 @@
 
       @keyframes brilho {
         from {
-          box-shadow: 0 0 6px 2px rgba(244, 114, 182, 0.4);
+          box-shadow: 0 0 6px 2px var(--brilho-a);
         }
 
         to {
-          box-shadow: 0 0 32px 10px rgba(244, 114, 182, 0.65);
+          box-shadow: 0 0 32px 10px var(--brilho-b);
         }
       }
 
@@ -631,12 +1068,8 @@
       .card {
         border: 1px solid var(--line);
         border-radius: 12px;
-        background: linear-gradient(
-          180deg,
-          rgba(17, 25, 48, 0.85),
-          rgba(8, 12, 26, 0.9)
-        );
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        background: var(--card-bg);
+        box-shadow: var(--card-inset);
       }
 
       .card-label {
@@ -659,7 +1092,7 @@
         justify-content: center;
         padding: 0.5rem 0.65rem 0.6rem;
         text-align: center;
-        border-color: rgba(34, 211, 238, 0.22);
+        border-color: var(--next-border);
       }
 
       #upcoming {
@@ -668,10 +1101,8 @@
         max-width: 100%;
         max-height: min(100%, 14rem);
         border-radius: 9px;
-        background: #060a14;
-        box-shadow:
-          inset 0 0 0 1px rgba(34, 211, 238, 0.22),
-          0 0 18px rgba(34, 211, 238, 0.1);
+        background: var(--upcoming-bg);
+        box-shadow: var(--upcoming-shadow);
       }
 
       .score-card {
@@ -681,13 +1112,9 @@
         justify-content: center;
         text-align: center;
         padding: 0.55rem 0.8rem 0.65rem;
-        border-color: rgba(34, 211, 238, 0.34);
-        background:
-          linear-gradient(180deg, rgba(34, 211, 238, 0.1), transparent 70%),
-          linear-gradient(180deg, rgba(17, 25, 48, 0.9), rgba(8, 12, 26, 0.94));
-        box-shadow:
-          0 0 22px rgba(34, 211, 238, 0.1),
-          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        border-color: var(--score-border);
+        background: var(--score-bg);
+        box-shadow: var(--score-shadow);
       }
 
       .score-hero {
@@ -699,7 +1126,7 @@
         letter-spacing: 0.04em;
         color: var(--cyan);
         font-variant-numeric: tabular-nums;
-        text-shadow: 0 0 18px rgba(34, 211, 238, 0.45);
+        text-shadow: var(--score-hero-shadow);
       }
 
       .scoreboard {
@@ -718,7 +1145,7 @@
       }
 
       .scoreboard-item + .scoreboard-item {
-        border-left: 1px solid rgba(148, 163, 184, 0.18);
+        border-left: 1px solid var(--divider);
       }
 
       .hud-value {
@@ -732,7 +1159,7 @@
 
       #high-score {
         color: var(--lime);
-        text-shadow: 0 0 12px rgba(163, 230, 53, 0.3);
+        text-shadow: var(--highscore-shadow);
       }
 
       #rows {
@@ -754,7 +1181,7 @@
         line-height: 1.2;
         color: var(--magenta);
         font-variant-numeric: tabular-nums;
-        text-shadow: 0 0 12px rgba(244, 114, 182, 0.3);
+        text-shadow: var(--meta-shadow);
       }
 
       .goal-track {
@@ -764,8 +1191,8 @@
         margin-top: 0.12rem;
         overflow: hidden;
         border-radius: 999px;
-        background: rgba(148, 163, 184, 0.16);
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+        background: var(--goal-track-bg);
+        box-shadow: var(--goal-track-shadow);
       }
 
       .goal-fill {
@@ -773,7 +1200,7 @@
         height: 100%;
         border-radius: inherit;
         background: linear-gradient(90deg, var(--cyan), var(--magenta));
-        box-shadow: 0 0 10px rgba(244, 114, 182, 0.55);
+        box-shadow: var(--goal-glow);
         transition: width 0.25s ease-out;
       }
 
@@ -821,7 +1248,7 @@
         font-size: 0.55rem;
         letter-spacing: 0.08em;
         text-align: right;
-        color: rgba(159, 176, 208, 0.6);
+        color: var(--debug-ink);
         opacity: 0.65;
         transition:
           opacity 0.15s ease,
@@ -843,10 +1270,10 @@
         left: auto;
         z-index: 10001;
         overflow: hidden;
-        border: 1px solid rgba(34, 211, 238, 0.35);
+        border: 1px solid var(--stats-border);
         border-radius: 5px;
         opacity: 0.88;
-        box-shadow: 0 0 18px rgba(34, 211, 238, 0.2);
+        box-shadow: var(--stats-shadow);
       }
 
       #stats.is-visible {
@@ -864,7 +1291,7 @@
         z-index: 1000;
         align-items: center;
         justify-content: center;
-        background: rgba(3, 6, 14, 0.78);
+        background: var(--modal-veil);
         -webkit-backdrop-filter: blur(4px);
         backdrop-filter: blur(4px);
       }
@@ -876,19 +1303,10 @@
       #restart-dialog {
         width: min(92%, 400px);
         padding: clamp(1.3rem, 4vw, 2rem);
-        border: 1px solid rgba(244, 114, 182, 0.42);
+        border: 1px solid var(--dialog-border);
         border-radius: 18px;
-        background:
-          radial-gradient(
-            120% 80% at 50% 0%,
-            rgba(244, 114, 182, 0.12),
-            transparent 60%
-          ),
-          linear-gradient(180deg, #111a36, #080c1a);
-        box-shadow:
-          0 0 42px rgba(244, 114, 182, 0.18),
-          0 26px 64px rgba(0, 0, 0, 0.72),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        background: var(--dialog-bg);
+        box-shadow: var(--dialog-shadow);
         color: var(--text);
         text-align: center;
       }
@@ -900,8 +1318,8 @@
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #fff;
-        text-shadow: 0 0 16px rgba(244, 114, 182, 0.4);
+        color: var(--dialog-title-ink);
+        text-shadow: var(--dialog-title-shadow);
       }
 
       #restart-dialog p {
@@ -929,14 +1347,14 @@
 
       #restart-cancel {
         color: var(--text);
-        background: rgba(148, 163, 184, 0.1);
-        border-color: rgba(148, 163, 184, 0.35);
+        background: var(--cancel-bg);
+        border-color: var(--cancel-border);
       }
 
       #restart-confirm {
-        color: #1a0714;
-        background: linear-gradient(180deg, #f9a8d4, var(--magenta));
-        box-shadow: 0 0 20px rgba(244, 114, 182, 0.35);
+        color: var(--confirm-ink);
+        background: var(--confirm-bg);
+        box-shadow: var(--confirm-shadow);
       }
 
       #restart-dialog button:hover {
@@ -1083,11 +1501,11 @@
         }
 
         .scoreboard-item:nth-child(even) {
-          border-left: 1px solid rgba(148, 163, 184, 0.18);
+          border-left: 1px solid var(--divider);
         }
 
         .scoreboard-item:nth-child(n + 3) {
-          border-top: 1px solid rgba(148, 163, 184, 0.18);
+          border-top: 1px solid var(--divider);
         }
 
         .hud-value,
@@ -1171,12 +1589,77 @@
         .goal-fill {
           transition: none !important;
         }
+
+        #theme-toggle:hover {
+          transform: none;
+        }
       }
     </style>
   </head>
 
   <body>
+    <script>
+      // Mirror the html theme class on body before any content is parsed.
+      (function () {
+        try {
+          if (document.documentElement.classList.contains("theme-light")) {
+            document.body.classList.add("theme-light");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <main id="tetris">
+      <button
+        id="theme-toggle"
+        type="button"
+        aria-label="Ativar tema claro"
+        aria-pressed="false"
+        title="Ativar tema claro"
+      >
+        <svg
+          class="icon-moon"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M20.5 14.2A8.6 8.6 0 0 1 9.8 3.5 8.6 8.6 0 1 0 20.5 14.2Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <svg
+          class="icon-sun"
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          aria-hidden="true"
+          focusable="false"
+          hidden
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="4.2"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
+          <path
+            d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
       <header class="masthead">
         <h1>TETRIS</h1>
         <p class="subtitle">arcade edition</p>
@@ -1313,6 +1796,144 @@
         return choices[Math.round(random(0, choices.length - 1))];
       }
 
+      //-------------------------------------------------------------------------
+      // theme: CSS tokens drive the UI, the palette below drives the canvas
+      //-------------------------------------------------------------------------
+
+      var THEME_KEY = "tetris-theme";
+      var THEME_PALETTES = {
+        dark: {
+          court: {
+            top: "#0b1226",
+            mid: "#080d1d",
+            bottom: "#04070f",
+            bloom: "rgba(34, 211, 238, 0.10)",
+            bloomClear: "rgba(34, 211, 238, 0)",
+            grid: "rgba(148, 163, 184, 0.075)",
+            border: "rgba(34, 211, 238, 0.30)",
+          },
+          next: {
+            top: "#0a1022",
+            bottom: "#05080f",
+            grid: "rgba(148, 163, 184, 0.06)",
+            border: "rgba(34, 211, 238, 0.30)",
+          },
+          bevel: {
+            highlight: "rgba(255, 255, 255, 0.50)",
+            highlightSoft: "rgba(255, 255, 255, 0.16)",
+            clear: "rgba(255, 255, 255, 0)",
+            shadeSoft: "rgba(0, 0, 0, 0.10)",
+            shade: "rgba(0, 0, 0, 0.40)",
+            gloss: "rgba(255, 255, 255, 0.42)",
+            rim: "rgba(255, 255, 255, 0.18)",
+          },
+          glow: 1,
+          blockColors: {},
+        },
+        light: {
+          court: {
+            top: "#fbf7ec",
+            mid: "#f6f0e2",
+            bottom: "#efe7d5",
+            bloom: "rgba(14, 116, 144, 0.05)",
+            bloomClear: "rgba(14, 116, 144, 0)",
+            grid: "rgba(15, 23, 42, 0.08)",
+            border: "rgba(15, 23, 42, 0.20)",
+          },
+          next: {
+            top: "#fbf7ec",
+            bottom: "#efe7d5",
+            grid: "rgba(15, 23, 42, 0.07)",
+            border: "rgba(15, 23, 42, 0.18)",
+          },
+          bevel: {
+            highlight: "rgba(255, 255, 255, 0.75)",
+            highlightSoft: "rgba(255, 255, 255, 0.35)",
+            clear: "rgba(255, 255, 255, 0)",
+            shadeSoft: "rgba(15, 23, 42, 0.08)",
+            shade: "rgba(15, 23, 42, 0.28)",
+            gloss: "rgba(255, 255, 255, 0.65)",
+            rim: "rgba(15, 23, 42, 0.20)",
+          },
+          glow: 0.5,
+          blockColors: {
+            "#22d3ee": "#0e7490",
+            "#60a5fa": "#2563eb",
+            "#fb923c": "#c2410c",
+            "#facc15": "#a16207",
+            "#4ade80": "#15803d",
+            "#c084fc": "#7e22ce",
+            "#fb7185": "#be123c",
+            "#fbbf24": "#b45309",
+            "#2dd4bf": "#0f766e",
+            "#e879f9": "#a21caf",
+            "#a3e635": "#4d7c0f",
+            "#818cf8": "#4338ca",
+            "#f472b6": "#be185d",
+            "#ef4444": "#b91c1c",
+            "#38bdf8": "#0369a1",
+          },
+        },
+      };
+
+      function palette() {
+        return THEME_PALETTES[theme === "light" ? "light" : "dark"];
+      }
+
+      function blockColor(color) {
+        var map = palette().blockColors;
+        return map[color] || color;
+      }
+
+      function storedTheme() {
+        try {
+          return localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
+        } catch (e) {
+          return "dark";
+        }
+      }
+
+      var theme = storedTheme();
+
+      // Applied synchronously before the game loop starts (first frame).
+      document.documentElement.classList.toggle("theme-light", theme === "light");
+      document.body.classList.toggle("theme-light", theme === "light");
+
+      function applyTheme(name, persist) {
+        theme = name === "light" ? "light" : "dark";
+        var isLight = theme === "light";
+        document.documentElement.classList.toggle("theme-light", isLight);
+        document.body.classList.toggle("theme-light", isLight);
+
+        var btn = get("theme-toggle");
+        if (btn) {
+          var moon = btn.querySelector(".icon-moon");
+          var sun = btn.querySelector(".icon-sun");
+          // SVG elements have no `hidden` IDL property, so toggle the attribute.
+          if (moon) moon.toggleAttribute("hidden", isLight);
+          if (sun) sun.toggleAttribute("hidden", !isLight);
+          btn.setAttribute("aria-pressed", isLight ? "true" : "false");
+          btn.setAttribute(
+            "aria-label",
+            isLight ? "Ativar tema escuro" : "Ativar tema claro",
+          );
+          btn.title = isLight ? "Ativar tema escuro" : "Ativar tema claro";
+        }
+
+        if (persist) {
+          try {
+            localStorage.setItem(THEME_KEY, theme);
+          } catch (e) {}
+        }
+
+        invalidate();
+        invalidateNext();
+      }
+
+      function toggleTheme() {
+        applyTheme(theme === "light" ? "dark" : "light", true);
+      }
+
       if (!window.requestAnimationFrame) {
         // http://paulirish.com/2011/requestanimationframe-for-smart-animating/
         window.requestAnimationFrame =
@@ -1374,7 +1995,6 @@
       var pieceCount = 0;
       var msgTimer = null;
       var highScore = Number(localStorage.getItem("highScore")) || 0;
-      var darkMode = false;
       var audioContext;
       var pieceCount = 0;
 
@@ -1595,6 +2215,7 @@
         document.addEventListener("keydown", keydown, false);
         window.addEventListener("resize", resize, false);
 
+        get("theme-toggle").addEventListener("click", toggleTheme, false);
         get("restart-cancel").addEventListener(
           "click",
           closeRestartModal,
@@ -2181,13 +2802,14 @@
       function drawCourt() {
         if (!invalid.court) return;
 
+        var pal = palette();
         ctx.clearRect(0, 0, nx * dx, ny * dy);
 
-        // deep field + a soft cyan bloom at the top
+        // deep field + a soft bloom at the top
         var bg = ctx.createLinearGradient(0, 0, 0, ny * dy);
-        bg.addColorStop(0, "#0b1226");
-        bg.addColorStop(0.55, "#080d1d");
-        bg.addColorStop(1, "#04070f");
+        bg.addColorStop(0, pal.court.top);
+        bg.addColorStop(0.55, pal.court.mid);
+        bg.addColorStop(1, pal.court.bottom);
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, nx * dx, ny * dy);
 
@@ -2199,13 +2821,13 @@
           0,
           ny * dy * 0.72,
         );
-        bloom.addColorStop(0, "rgba(34, 211, 238, 0.10)");
-        bloom.addColorStop(1, "rgba(34, 211, 238, 0)");
+        bloom.addColorStop(0, pal.court.bloom);
+        bloom.addColorStop(1, pal.court.bloomClear);
         ctx.fillStyle = bloom;
         ctx.fillRect(0, 0, nx * dx, ny * dy);
 
         // subtle cell grid (1 CSS px lines, integer coordinates)
-        ctx.fillStyle = "rgba(148, 163, 184, 0.075)";
+        ctx.fillStyle = pal.court.grid;
         var gx, gy;
         for (gx = 1; gx < nx; gx++) ctx.fillRect(gx * dx, 0, 1, ny * dy);
         for (gy = 1; gy < ny; gy++) ctx.fillRect(0, gy * dy, nx * dx, 1);
@@ -2228,20 +2850,25 @@
             true,
           );
 
+        ctx.strokeStyle = pal.court.border;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, nx * dx - 1, ny * dy - 1);
+
         invalid.court = false;
       }
 
       function drawNext() {
         if (!invalid.next) return;
 
+        var pal = palette();
         uctx.clearRect(0, 0, nu * udx, nu * udx);
         var bg = uctx.createLinearGradient(0, 0, 0, nu * udx);
-        bg.addColorStop(0, "#0a1022");
-        bg.addColorStop(1, "#05080f");
+        bg.addColorStop(0, pal.next.top);
+        bg.addColorStop(1, pal.next.bottom);
         uctx.fillStyle = bg;
         uctx.fillRect(0, 0, nu * udx, nu * udx);
 
-        uctx.fillStyle = "rgba(148, 163, 184, 0.06)";
+        uctx.fillStyle = pal.next.grid;
         var g;
         for (g = 1; g < nu; g++) {
           uctx.fillRect(g * udx, 0, 1, nu * udx);
@@ -2261,6 +2888,10 @@
             false,
           );
         });
+
+        uctx.strokeStyle = pal.next.border;
+        uctx.lineWidth = 1;
+        uctx.strokeRect(0.5, 0.5, nu * udx - 1, nu * udx - 1);
 
         invalid.next = false;
       }
@@ -2319,6 +2950,8 @@
       }
 
       function drawBlock(ctx, px, py, size, color, active) {
+        var pal = palette();
+        var fill = blockColor(color);
         var pad = Math.max(1, Math.round(size * 0.06));
         var x = Math.round(px) + pad;
         var y = Math.round(py) + pad;
@@ -2327,12 +2960,12 @@
 
         // base fill with glow (stronger on the falling piece)
         ctx.save();
-        ctx.shadowColor = color;
-        ctx.shadowBlur = active
-          ? Math.max(6, size * 0.5)
-          : Math.max(2, size * 0.14);
+        ctx.shadowColor = fill;
+        ctx.shadowBlur =
+          (active ? Math.max(6, size * 0.5) : Math.max(2, size * 0.14)) *
+          pal.glow;
         pathRoundRect(ctx, x, y, s, s, r);
-        ctx.fillStyle = color;
+        ctx.fillStyle = fill;
         ctx.fill();
         ctx.restore();
 
@@ -2341,14 +2974,14 @@
         pathRoundRect(ctx, x, y, s, s, r);
         ctx.clip();
         var bevel = ctx.createLinearGradient(0, y, 0, y + s);
-        bevel.addColorStop(0, "rgba(255, 255, 255, 0.50)");
-        bevel.addColorStop(0.16, "rgba(255, 255, 255, 0.16)");
-        bevel.addColorStop(0.52, "rgba(255, 255, 255, 0)");
-        bevel.addColorStop(0.82, "rgba(0, 0, 0, 0.10)");
-        bevel.addColorStop(1, "rgba(0, 0, 0, 0.40)");
+        bevel.addColorStop(0, pal.bevel.highlight);
+        bevel.addColorStop(0.16, pal.bevel.highlightSoft);
+        bevel.addColorStop(0.52, pal.bevel.clear);
+        bevel.addColorStop(0.82, pal.bevel.shadeSoft);
+        bevel.addColorStop(1, pal.bevel.shade);
         ctx.fillStyle = bevel;
         ctx.fillRect(x, y, s, s);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.42)";
+        ctx.fillStyle = pal.bevel.gloss;
         ctx.fillRect(
           x + Math.round(r * 0.7),
           y + 1,
@@ -2367,7 +3000,7 @@
           s - 1,
           Math.max(1, r - 0.5),
         );
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+        ctx.strokeStyle = pal.bevel.rim;
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.restore();
@@ -2377,6 +3010,7 @@
       // FINALLY, lets run the game
       //-------------------------------------------------------------------------
 
+      applyTheme(theme, false);
       drawHighScore();
       run();
     </script>
