@@ -1997,6 +1997,7 @@
       var highScore = Number(localStorage.getItem("highScore")) || 0;
       var audioContext;
       var pieceCount = 0;
+      var restartShouldResume = false;
 
       // mensagens que aparecem quando completa linha
       var mensagens = ["Muito bem!", "Parabéns!", "Perfeito!"];
@@ -2280,6 +2281,11 @@
           return;
         }
 
+        if (get("restart-modal").classList.contains("visible")) {
+          ev.preventDefault();
+          return;
+        }
+
         if (ev.keyCode == KEY.F && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
           toggleStats();
           ev.preventDefault();
@@ -2346,16 +2352,27 @@
       function requestRestart() {
         if (!playing && !paused) return;
 
+        restartShouldResume = playing;
+        if (playing) {
+          paused = true;
+          playing = false;
+        }
         get("restart-modal").classList.add("visible");
         get("restart-confirm").focus();
       }
 
       function closeRestartModal() {
         get("restart-modal").classList.remove("visible");
+        if (restartShouldResume) {
+          paused = false;
+          playing = true;
+        }
+        restartShouldResume = false;
       }
 
       function confirmRestart() {
-        closeRestartModal();
+        get("restart-modal").classList.remove("visible");
+        restartShouldResume = false;
         restartGame();
       }
 
