@@ -1204,12 +1204,15 @@
         transition: width 0.25s ease-out;
       }
 
-      .controls {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 0.45rem 0.65rem 0.52rem;
-      }
+      
+.controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.65rem 0.8rem;
+  border-color: var(--cyan);
+}
+
 
       .keys {
         display: grid;
@@ -1234,13 +1237,16 @@
         gap: 0.22rem;
       }
 
-      .keys .key-label {
-        font-family: var(--display);
-        font-size: 0.72rem;
-        color: var(--muted);
-        text-align: left;
-        white-space: nowrap;
-      }
+      
+.keys .key-label {
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  white-space: nowrap;
+}
+
 
       .debug-hint {
         margin: 0.35rem 0 0;
